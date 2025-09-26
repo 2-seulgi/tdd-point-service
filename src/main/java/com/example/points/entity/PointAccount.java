@@ -1,7 +1,7 @@
 package com.example.points.entity;
 
 public class PointAccount {
-    private String userId;
+    private final String userId;
     private long balance = 0L; // 포인트
 
     public String getUserId() {return userId;}

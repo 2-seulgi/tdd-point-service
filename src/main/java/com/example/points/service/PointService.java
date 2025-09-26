@@ -11,6 +11,7 @@ public class PointService {
     }
 
     public PointAccount createAccount(String userId) {
-        return new PointAccount(userId, 0L); // 하드코딩으로 통과
+        PointAccount account = new PointAccount(userId, 0L);
+        return pointAccountRepository.save(account);
     }
 }
