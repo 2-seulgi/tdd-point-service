@@ -14,14 +14,14 @@ public class PointServiceTest {
     @InjectMocks PointService pointService; // 목을 주입받은 서비스
     @Mock PointAccountRepository pointAccountRepository; // 외부 협력자 목
 
-    // ========== 🔴 RED:  실패하는 테스트 ===========
+    // ========== 🟢 GREEN: 최소 구현 ===========
     @Test
     void 신규계정_잔액은_0원_RED(){
         //given
         String userId = "user1";
 
         //when
-        var account = pointService.createAccount(userId); //  에러!
+        var account = pointService.createAccount(userId);
 
         //then
         assertThat(account.getBalance()).isZero();

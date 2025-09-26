@@ -11,7 +11,6 @@ public class PointService {
     }
 
     public PointAccount createAccount(String userId) {
-        // 최소 구현: 일단 실패를 유발하기 위해 null 리턴 (실행 RED)
-        return null;
+        return new PointAccount(userId, 0L); // 하드코딩으로 통과
     }
 }
