@@ -14,4 +14,10 @@ public class PointService {
         PointAccount account = new PointAccount(userId);
         return pointAccountRepository.save(account);
     }
+
+    public void earn(String userId, long amount) {
+
+        var acc = pointAccountRepository.findByUserId(userId).orElseThrow();
+        acc.earn(amount);
+    }
 }

@@ -6,4 +6,5 @@ import java.util.Optional;
 
 public interface PointAccountRepository  {
     PointAccount save(PointAccount account);
+    Optional<PointAccount> findByUserId(String userId);
 }

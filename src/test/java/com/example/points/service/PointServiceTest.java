@@ -8,6 +8,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -42,13 +44,16 @@ public class PointServiceTest {
     void 충전하면_잔액이_증가한다(){
         //given
         String userId = "user1";
+        long amount = 500_000L;
         PointAccount account = new PointAccount(userId);
-
+        given(pointAccountRepository.findByUserId(userId))
+                .willReturn(Optional.of(account));
         //when
-        pointService.earn(userId,100000);
+        pointService.earn(userId,amount);
 
         //then
-        assertThat(account.getBalance()).isEqualTo(100000);
+        assertThat(account.getUserId()).isEqualTo(userId);
+        assertThat(account.getBalance()).isEqualTo(amount);
     }
 
 
