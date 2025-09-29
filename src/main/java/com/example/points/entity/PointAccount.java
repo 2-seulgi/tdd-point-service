@@ -7,9 +7,8 @@ public class PointAccount {
     public String getUserId() {return userId;}
     public long getBalance() {return balance;}
 
-    public PointAccount(String userId, long l) {
+    public PointAccount(String userId) {
         this.userId = userId;
-        this.balance = l;
     }
 
 }

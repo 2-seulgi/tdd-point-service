@@ -29,7 +29,7 @@ public class PointServiceTest {
 
         //when
         var account = pointService.createAccount(userId);
-        // 1. new PointAccount("user1", 0L) 생성
+        // 1. new PointAccount("user1") 생성
         // 2. pointAccountRepository.save(account) 호출
         // 3. Mock 설정 통해 save가 "넘긴 객체 그대로" 반환
 
@@ -37,6 +37,21 @@ public class PointServiceTest {
         assertThat(account.getBalance()).isZero();
         assertThat(account.getUserId()).isEqualTo(userId);
     }
+
+    @Test
+    void 충전하면_잔액이_증가한다(){
+        //given
+        String userId = "user1";
+        PointAccount account = new PointAccount(userId);
+
+        //when
+        pointService.earn(userId,100000);
+
+        //then
+        assertThat(account.getBalance()).isEqualTo(100000);
+    }
+
+
 
 
 

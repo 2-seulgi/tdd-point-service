@@ -11,7 +11,7 @@ public class PointService {
     }
 
     public PointAccount createAccount(String userId) {
-        PointAccount account = new PointAccount(userId, 0L);
+        PointAccount account = new PointAccount(userId);
         return pointAccountRepository.save(account);
     }
 }
