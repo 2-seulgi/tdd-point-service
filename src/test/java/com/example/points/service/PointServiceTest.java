@@ -13,6 +13,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class) // 순수 단위 테스트용. Mockito가 @Mock 초기화. 스프링 컨텍스트 없음
 public class PointServiceTest {
@@ -44,16 +45,26 @@ public class PointServiceTest {
     void 충전하면_잔액이_증가한다(){
         //given
         String userId = "user1";
-        long amount = 500_000L;
-        PointAccount account = new PointAccount(userId);
+        long amount = 50L;
+        PointAccount existingAccount = new PointAccount(1L, userId, 100L); // ID 있는 기존 계정
+
         given(pointAccountRepository.findByUserId(userId))
-                .willReturn(Optional.of(account));
+                .willReturn(Optional.of(existingAccount));
+        given(pointAccountRepository.save(any(PointAccount.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
         //when
-        pointService.earn(userId,amount);
+        PointAccount result = pointService.earn(userId,amount);
+        // 1. pointAccountRepository.findByUserId("user1") 호출 → 잔액 100인 계정 반환
+        // 2. pointService.earn 호출 → 새로운 PointAccount(userId, 150L) 생성
+        // 3. pointAccountRepository.save(충전된계정) 호출 → Mock이 그대로 반환
 
         //then
-        assertThat(account.getUserId()).isEqualTo(userId);
-        assertThat(account.getBalance()).isEqualTo(amount);
+        assertThat(result.getId()).isEqualTo(1L); // 같은 ID 유지 (UPDATE 확인)
+        assertThat(result.getUserId()).isEqualTo(userId);
+        assertThat(result.getBalance()).isEqualTo(150L);
+        // UPDATE가 호출되었는지 검증
+        verify(pointAccountRepository).save(any(PointAccount.class));
+
     }
 
 
