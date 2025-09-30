@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -67,8 +68,32 @@ public class PointServiceTest {
 
     }
 
+    @Test
+    void 음수_충전시_예외발생(){
+        // given
+        String userId = "user1";
+        long amount = -10L;
+        PointAccount existingAccount = new PointAccount(1L, userId, 100L); // ID 있는 기존 계정
+        given(pointAccountRepository.findByUserId(userId))
+                .willReturn(Optional.of(existingAccount));
 
+        //when & then
+        assertThrows(IllegalArgumentException.class,
+                () -> pointService.earn(userId, amount));
 
+    }
+
+    @Test
+    void 천만원_초과_충전시_예외발생(){
+        String userId = "user1";
+        long amount = 10_000_001L;
+        PointAccount existingAccount = new PointAccount(1L, userId, 100L);
+        given(pointAccountRepository.findByUserId(userId))
+                .willReturn(Optional.of(existingAccount));
+        // when&then
+        assertThrows(IllegalArgumentException.class,
+                () -> pointService.earn(userId, amount));
+    }
 
 
 }
