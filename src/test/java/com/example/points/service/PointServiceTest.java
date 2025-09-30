@@ -55,9 +55,14 @@ public class PointServiceTest {
                 .willAnswer(invocation -> invocation.getArgument(0));
         //when
         PointAccount result = pointService.earn(userId,amount);
-        // 1. pointAccountRepository.findByUserId("user1") 호출 → 잔액 100인 계정 반환
-        // 2. pointService.earn 호출 → 새로운 PointAccount(userId, 150L) 생성
-        // 3. pointAccountRepository.save(충전된계정) 호출 → Mock이 그대로 반환
+        // 내부 동작(earn 메서드 안에서 일어나는 순서)
+        // 1) pointAccountRepository.findByUserId("user1") 호출
+        //    -> given(...) 스텁 덕분에 Optional.of(existingAccount) 반환
+        // 2) existingAccount.earn(50) 호출
+        //    -> balance: 100 -> 150 (엔티티 내부 상태 변경)
+        // 3) pointAccountRepository.save(existingAccount) 호출
+        //    -> willAnswer(...) 스텁 덕분에 전달받은 객체 그대로 반환
+        // 4) result == existingAccount (동일 인스턴스, 상태만 변경)
 
         //then
         assertThat(result.getId()).isEqualTo(1L); // 같은 ID 유지 (UPDATE 확인)
