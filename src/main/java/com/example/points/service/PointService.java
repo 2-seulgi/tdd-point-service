@@ -30,9 +30,14 @@ public class PointService {
 
         // 2. 포인트 충전
         acc.earn(amount);
+        PointAccount saved = pointAccountRepository.save(acc);
+        // 3. 히스토리 기록
+        pointHistoryRepository.save(new PointHistory(
+                null, userId, PointHistory.Type.EARN, amount, saved.getBalance(), Instant.now()
+        ));
 
-        // 3. 저장 후 반환
-        return pointAccountRepository.save(acc);
+        // 4. 저장 후 반환
+        return saved;
     }
 
     // 포인트 사용

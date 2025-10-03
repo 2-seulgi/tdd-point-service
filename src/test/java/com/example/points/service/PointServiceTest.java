@@ -58,6 +58,8 @@ public class PointServiceTest {
                 .willReturn(Optional.of(existingAccount));
         given(pointAccountRepository.save(any(PointAccount.class)))
                 .willAnswer(invocation -> invocation.getArgument(0));
+        given(pointHistoryRepository.save(any(PointHistory.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
         //when
         PointAccount result = pointService.earn(userId,amount);
         // 내부 동작(earn 메서드 안에서 일어나는 순서)
@@ -75,6 +77,14 @@ public class PointServiceTest {
         assertThat(result.getBalance()).isEqualTo(150L);
         // UPDATE가 호출되었는지 검증
         verify(pointAccountRepository).save(any(PointAccount.class));
+        // 충전  내역이 기록되었는지 검증
+        ArgumentCaptor<PointHistory> historyCaptor = ArgumentCaptor.forClass(PointHistory.class);
+        verify(pointHistoryRepository).save(historyCaptor.capture());
+        PointHistory savedHistory = historyCaptor.getValue();
+        assertThat(savedHistory.getUserId()).isEqualTo(userId);
+        assertThat(savedHistory.getType()).isEqualTo(PointHistory.Type.EARN);
+        assertThat(savedHistory.getAmount()).isEqualTo(amount);
+        assertThat(savedHistory.getBalanceAfter()).isEqualTo(150L);
 
     }
 
