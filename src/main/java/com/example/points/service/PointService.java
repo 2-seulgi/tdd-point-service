@@ -6,6 +6,7 @@ import com.example.points.repository.PointAccountRepository;
 import com.example.points.repository.PointHistoryRepository;
 
 import java.time.Instant;
+import java.util.List;
 
 public class PointService {
     private final PointAccountRepository pointAccountRepository;
@@ -63,5 +64,9 @@ public class PointService {
 
         // 5. 저장 후 반환
         return saved;
+    }
+
+    public List<PointHistory> getHistories(String userId) {
+        return pointHistoryRepository.findAllByUserIdOrderByOccurredAtDesc(userId);
     }
 }

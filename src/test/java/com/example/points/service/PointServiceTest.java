@@ -169,8 +169,8 @@ public class PointServiceTest {
         // given
         String userId = "user1";
         List<PointHistory> fake = List.of(
-                new PointHistory(null, userId, PointHistory.Type.USE, 30L, 70L, Instant.parse("2025-10-01T00:00:00Z")),
-                new PointHistory(null, userId, PointHistory.Type.EARN, 50L, 120L, Instant.parse("2025-10-02T00:00:00Z"))
+                new PointHistory(null, userId, PointHistory.Type.EARN, 50L, 120L, Instant.parse("2025-10-02T00:00:00Z")),
+                new PointHistory(null, userId, PointHistory.Type.USE, 30L, 70L, Instant.parse("2025-10-01T00:00:00Z"))
         );
         // 저장소는 이미 최신순으로 반환한다고 가정
         given(pointHistoryRepository.findAllByUserIdOrderByOccurredAtDesc(userId))
