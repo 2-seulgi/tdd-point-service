@@ -30,4 +30,9 @@ public class PointAccount {
         return this;
     }
 
+    public void use(long amount) {
+        if (amount <= 0) throw new IllegalArgumentException("사용 금액은 0보다 커야 합니다.");
+        if (this.balance < amount) throw new IllegalArgumentException("잔액이 부족합니다.");
+        this.balance -= amount; // 현재 객체의 balance 수정
+    }
 }
