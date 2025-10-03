@@ -11,6 +11,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -162,4 +164,25 @@ public class PointServiceTest {
     }
 
 
+    @Test
+    void 내역을_최신순으로_조회한다(){
+        // given
+        String userId = "user1";
+        List<PointHistory> fake = List.of(
+                new PointHistory(null, userId, PointHistory.Type.USE, 30L, 70L, Instant.parse("2025-10-01T00:00:00Z")),
+                new PointHistory(null, userId, PointHistory.Type.EARN, 50L, 120L, Instant.parse("2025-10-02T00:00:00Z"))
+        );
+        // 저장소는 이미 최신순으로 반환한다고 가정
+        given(pointHistoryRepository.findAllByUserIdOrderByOccurredAtDesc(userId))
+                .willReturn(fake);
+
+        // when
+        List<PointHistory> histories = pointService.getHistories(userId);
+
+        // then
+        assertThat(histories).hasSize(2);
+        assertThat(histories.get(0).getOccurredAt()).isAfter(histories.get(1).getOccurredAt()); // 최신순
+        assertThat(histories.get(0).getType()).isEqualTo(PointHistory.Type.EARN);
+        assertThat(histories.get(1).getType()).isEqualTo(PointHistory.Type.USE);
+    }
 }
