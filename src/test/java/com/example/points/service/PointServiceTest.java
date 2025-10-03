@@ -19,8 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class) // 순수 단위 테스트용. Mockito가 @Mock 초기화. 스프링 컨텍스트 없음
 public class PointServiceTest {
@@ -30,7 +29,7 @@ public class PointServiceTest {
 
     // ========== 🔵 REFACTOR: 리팩토링 ===========
     @Test
-    void 신규계정_잔액은_0원_REFACTOR(){
+    void 신규계정_잔액은_0원(){
         //given
         String userId = "user1";
 
@@ -45,8 +44,20 @@ public class PointServiceTest {
         // 3. Mock 설정 통해 save가 "넘긴 객체 그대로" 반환
 
         //then
-        assertThat(account.getBalance()).isZero();
-        assertThat(account.getUserId()).isEqualTo(userId);
+        // 1) save가 어떤 값으로 호출됐는지 캡처해서 필드 검증
+        ArgumentCaptor<PointAccount> captor = ArgumentCaptor.forClass(PointAccount.class);
+        verify(pointAccountRepository).save(captor.capture());
+        PointAccount saved = captor.getValue();
+        assertThat(saved.getUserId()).isEqualTo(userId);
+        assertThat(saved.getBalance()).isZero();
+
+        // 2) 서비스 반환과 저장 인스턴스 동일성(선택: willAnswer로 같은 객체를 반환하므로 same)
+        assertThat(account).isSameAs(saved);
+
+        // 3) 불필요한 협력자 호출 없었는지 확인
+        verifyNoInteractions(pointHistoryRepository);
+        verifyNoMoreInteractions(pointAccountRepository);
+
     }
 
     @Test
@@ -60,8 +71,7 @@ public class PointServiceTest {
                 .willReturn(Optional.of(existingAccount));
         given(pointAccountRepository.save(any(PointAccount.class)))
                 .willAnswer(invocation -> invocation.getArgument(0));
-        given(pointHistoryRepository.save(any(PointHistory.class)))
-                .willAnswer(invocation -> invocation.getArgument(0));
+
         //when
         PointAccount result = pointService.earn(userId,amount);
         // 내부 동작(earn 메서드 안에서 일어나는 순서)
@@ -77,17 +87,34 @@ public class PointServiceTest {
         assertThat(result.getId()).isEqualTo(1L); // 같은 ID 유지 (UPDATE 확인)
         assertThat(result.getUserId()).isEqualTo(userId);
         assertThat(result.getBalance()).isEqualTo(150L);
-        // UPDATE가 호출되었는지 검증
-        verify(pointAccountRepository).save(any(PointAccount.class));
-        // 충전  내역이 기록되었는지 검증
-        ArgumentCaptor<PointHistory> historyCaptor = ArgumentCaptor.forClass(PointHistory.class);
-        verify(pointHistoryRepository).save(historyCaptor.capture());
-        PointHistory savedHistory = historyCaptor.getValue();
-        assertThat(savedHistory.getUserId()).isEqualTo(userId);
-        assertThat(savedHistory.getType()).isEqualTo(PointHistory.Type.EARN);
-        assertThat(savedHistory.getAmount()).isEqualTo(amount);
-        assertThat(savedHistory.getBalanceAfter()).isEqualTo(150L);
+        // 동일 인스턴스가 저장되었는지(인플레이스 업데이트) 확인
+        verify(pointAccountRepository).save(same(existingAccount));
 
+    }
+
+    @Test
+    void 충전하면_이력이_기록된다() {
+        // given
+        String userId = "user1";
+        long before = 100L, amount = 50L, expected = before + amount;
+        PointAccount existingAccount = new PointAccount(1L, userId, before);
+
+        given(pointAccountRepository.findByUserId(userId)).willReturn(Optional.of(existingAccount));
+        given(pointAccountRepository.save(any(PointAccount.class)))
+                .willAnswer(inv -> inv.getArgument(0));
+        // ⛔ 불필요: history.save 스텁은 제거 (반환값 미사용)
+
+        // when
+        pointService.earn(userId, amount);
+
+        // then: argThat로 한 번에 필드 검증
+        verify(pointHistoryRepository).save(argThat(h ->
+                h.getUserId().equals(userId) &&
+                        h.getType() == PointHistory.Type.EARN &&
+                        h.getAmount() == amount &&
+                        h.getBalanceAfter() == expected
+        ));
+        verifyNoMoreInteractions(pointHistoryRepository);
     }
 
     @Test
@@ -128,16 +155,19 @@ public class PointServiceTest {
         given(pointAccountRepository.save(any(PointAccount.class)))
                 .willAnswer(invocation -> invocation.getArgument(0));
         given(pointHistoryRepository.save(any(PointHistory.class)))
-                .willAnswer(invocation -> invocation.getArgument(0));
+               .willAnswer(invocation -> invocation.getArgument(0));
         //when
         PointAccount result = pointService.use(userId,amount);
 
         //then
         assertThat(result.getBalance()).isEqualTo(50L);
+        verify(pointAccountRepository).save(org.mockito.ArgumentMatchers.same(existingAccount));
+
         // 사용 내역이 기록되었는지 검증
         ArgumentCaptor<PointHistory> historyCaptor = ArgumentCaptor.forClass(PointHistory.class);
         verify(pointHistoryRepository).save(historyCaptor.capture());
         PointHistory savedHistory = historyCaptor.getValue();
+
         assertThat(savedHistory.getUserId()).isEqualTo(userId);
         assertThat(savedHistory.getType()).isEqualTo(PointHistory.Type.USE);
         assertThat(savedHistory.getAmount()).isEqualTo(amount);
