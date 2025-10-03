@@ -1,9 +1,12 @@
 package com.example.points.service;
 
 import com.example.points.entity.PointAccount;
+import com.example.points.entity.PointHistory;
 import com.example.points.repository.PointAccountRepository;
+import com.example.points.repository.PointHistoryRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -20,6 +23,7 @@ import static org.mockito.Mockito.verify;
 public class PointServiceTest {
     @InjectMocks PointService pointService; // 목을 주입받은 서비스
     @Mock PointAccountRepository pointAccountRepository; // 외부 협력자 목
+    @Mock PointHistoryRepository pointHistoryRepository; // 외부 협력자 목
 
     // ========== 🔵 REFACTOR: 리팩토링 ===========
     @Test
@@ -110,11 +114,21 @@ public class PointServiceTest {
                 .willReturn(Optional.of(existingAccount));
         given(pointAccountRepository.save(any(PointAccount.class)))
                 .willAnswer(invocation -> invocation.getArgument(0));
+        given(pointHistoryRepository.save(any(PointHistory.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
         //when
         PointAccount result = pointService.use(userId,amount);
 
         //then
-        assertThat(result.getId()).isEqualTo(60L);
+        assertThat(result.getBalance()).isEqualTo(50L);
+        // 사용 내역이 기록되었는지 검증
+        ArgumentCaptor<PointHistory> historyCaptor = ArgumentCaptor.forClass(PointHistory.class);
+        verify(pointHistoryRepository).save(historyCaptor.capture());
+        PointHistory savedHistory = historyCaptor.getValue();
+        assertThat(savedHistory.getUserId()).isEqualTo(userId);
+        assertThat(savedHistory.getType()).isEqualTo(PointHistory.Type.USE);
+        assertThat(savedHistory.getAmount()).isEqualTo(amount);
+        assertThat(savedHistory.getBalanceAfter()).isEqualTo(50L);
 
     }
 
