@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class) // 순수 단위 테스트용. Mockito가 @Mock 초기화. 스프링 컨텍스트 없음
@@ -130,6 +131,24 @@ public class PointServiceTest {
         assertThat(savedHistory.getAmount()).isEqualTo(amount);
         assertThat(savedHistory.getBalanceAfter()).isEqualTo(50L);
 
+    }
+
+    @Test
+    void 잔액보다_많이_사용하면_예외(){
+        // given
+        String userId = "user1";
+        long useAmount = 200L;
+        PointAccount existing = new PointAccount(1L, userId, 150L);
+        given(pointAccountRepository.findByUserId(userId))
+                .willReturn(Optional.of(existing));
+
+        // when & then
+        assertThrows(IllegalArgumentException.class,
+                () -> pointService.use(userId, useAmount));
+
+        // 저장 시도 없음
+        verify(pointAccountRepository, never()).save(any());
+        verify(pointHistoryRepository, never()).save(any());
     }
 
 
