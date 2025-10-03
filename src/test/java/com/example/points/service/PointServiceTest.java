@@ -100,5 +100,23 @@ public class PointServiceTest {
                 () -> pointService.earn(userId, amount));
     }
 
+    @Test
+    void 사용하면_잔액이_감소하고_내역이_기록된다(){
+        //given
+        String userId = "user1";
+        long amount = 50L;
+        PointAccount existingAccount = new PointAccount(1L, userId, 100L); // ID 있는 기존 계정
+        given(pointAccountRepository.findByUserId(userId))
+                .willReturn(Optional.of(existingAccount));
+        given(pointAccountRepository.save(any(PointAccount.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+        //when
+        PointAccount result = pointService.use(userId,amount);
+
+        //then
+        assertThat(result.getId()).isEqualTo(60L);
+
+    }
+
 
 }
