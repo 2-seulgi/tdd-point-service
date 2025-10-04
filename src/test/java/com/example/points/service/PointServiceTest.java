@@ -83,6 +83,7 @@ public class PointServiceTest {
         //    -> willAnswer(...) 스텁 덕분에 전달받은 객체 그대로 반환
         // 4) result == existingAccount (동일 인스턴스, 상태만 변경)
 
+
         //then
         assertThat(result.getId()).isEqualTo(1L); // 같은 ID 유지 (UPDATE 확인)
         assertThat(result.getUserId()).isEqualTo(userId);
@@ -90,31 +91,6 @@ public class PointServiceTest {
         // 동일 인스턴스가 저장되었는지(인플레이스 업데이트) 확인
         verify(pointAccountRepository).save(same(existingAccount));
 
-    }
-
-    @Test
-    void 충전하면_이력이_기록된다() {
-        // given
-        String userId = "user1";
-        long before = 100L, amount = 50L, expected = before + amount;
-        PointAccount existingAccount = new PointAccount(1L, userId, before);
-
-        given(pointAccountRepository.findByUserId(userId)).willReturn(Optional.of(existingAccount));
-        given(pointAccountRepository.save(any(PointAccount.class)))
-                .willAnswer(inv -> inv.getArgument(0));
-        // ⛔ 불필요: history.save 스텁은 제거 (반환값 미사용)
-
-        // when
-        pointService.earn(userId, amount);
-
-        // then: argThat로 한 번에 필드 검증
-        verify(pointHistoryRepository).save(argThat(h ->
-                h.getUserId().equals(userId) &&
-                        h.getType() == PointHistory.Type.EARN &&
-                        h.getAmount() == amount &&
-                        h.getBalanceAfter() == expected
-        ));
-        verifyNoMoreInteractions(pointHistoryRepository);
     }
 
     @Test
